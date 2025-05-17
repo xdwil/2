@@ -3,33 +3,33 @@ name: Rebase with Upstream
 on:
   schedule:
     # Run every 6 hours (at minute 0 on hours 0, 6, 12, and 18)
-    - cron: '0 */4 * * *'
-  workflow_dispatch:  # Allows manual triggering if desired
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   rebase:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out your forked repository with full git history.
+      # Step 1: Check out your fork with the full history.
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      # Step 2: Configure Git user details (for commit metadata).
+      # Step 2: Configure Git user details.
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Step 3: Add the upstream remote. If it exists, the command will echo a message.
+      # Step 3: Add the upstream remote (the public repo) if not already present.
       - name: Add upstream remote
         run: |
           git remote add upstream https://github.com/xdwil/1.git || echo "Upstream already exists"
 
-      # Step 4: Fetch the latest changes from the upstream repository.
+      # Step 4: Fetch upstream changes.
       - name: Fetch upstream changes
         run: git fetch upstream
 
@@ -39,6 +39,12 @@ jobs:
           git checkout main
           git rebase upstream/main
 
-      # Step 6: Push the rebased branch back to your fork using --force-with-lease.
+      # Step 6: Update the pushing URL to include the GitHub token.
+      - name: Configure authenticated remote URL
+        run: |
+          # Update the origin remote URL for pushing with authentication.
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/xdwil/2.git
+
+      # Step 7: Push the rebased branch back to your fork using --force-with-lease.
       - name: Push changes to GitHub
         run: git push origin main --force-with-lease
