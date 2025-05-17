@@ -1,0 +1,46 @@
+name: Rebase with Upstream (Pull --rebase)
+
+on:
+  schedule:
+    # Run every 6 hours (minute 0 on hours 0, 6, 12, and 18)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Enable manual triggering if needed
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out your repository with full history.
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # 2. Configure Git user details.
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # 3. Add the upstream remote (if not already present).
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/xdwil/1.git || echo "Upstream remote already exists"
+
+      # 4. Pull from upstream with rebase.
+      - name: Pull upstream changes with rebase
+        run: |
+          # This pulls changes from upstream/main and rebases your local main onto them.
+          git checkout main
+          git pull upstream main --rebase
+
+      # 5. Update the origin remote URL to include the PAT for push authentication.
+      - name: Configure authenticated remote URL
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/xdwil/2.git
+
+      # 6. Force-push the updated main branch back to your fork.
+      - name: Push changes to GitHub
+        run: git push origin main --force-with-lease
