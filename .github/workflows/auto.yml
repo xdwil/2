@@ -1,0 +1,34 @@
+name: Auto Merge Upstream Changes
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  merge-upstream:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Custom Branch
+        uses: actions/checkout@v3
+        with:
+          ref: custom  # Use the branch where your modifications reside
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Add Upstream Remote
+        run: |
+          git remote add upstream https://github.com/xdwil/1.git
+          git fetch upstream
+
+      - name: Merge Upstream
+        run: |
+          git merge upstream/main --no-edit
+
+      - name: Push Changes
+        run: git push origin custom
